@@ -51,16 +51,28 @@ max_concurrent_connections = config["max_concurrent_connections"]
 
 user_agent = UserAgent(os='windows', platforms='pc', browsers='chrome')
 
+# Fungsi untuk memastikan setiap proxy memiliki prefix 'http://'
+def normalize_proxy(proxy_list):
+    normalized_list = []
+    for proxy in proxy_list:
+        if not proxy.startswith("http://"):
+            normalized_list.append(f"http://{proxy}")
+        else:
+            normalized_list.append(proxy)
+    return normalized_list
+
 # Fungsi untuk memuat ulang daftar proxy
 async def reload_proxy_list():
     with open('proxy.txt', 'r') as file:
         proxies = file.read().splitlines()
+    proxies = normalize_proxy(proxies)  # Normalisasi proxy
     logger.info("Daftar proxy telah dimuat pertama kali.")
     
     while True:
         await asyncio.sleep(reload_interval)  # Tunggu interval sebelum reload berikutnya
         with open('proxy.txt', 'r') as file:
             proxies = file.read().splitlines()
+        proxies = normalize_proxy(proxies)  # Normalisasi proxy
         logger.info("Daftar proxy telah dimuat ulang.")
         return proxies
 
@@ -159,6 +171,7 @@ async def main():
     # Load proxy pertama kali tanpa delay
     with open('proxy.txt', 'r') as file:
         proxies = file.read().splitlines()
+    proxies = normalize_proxy(proxies)  # Normalisasi proxy
     logger.info("Daftar proxy pertama kali dimuat.")
     
     # Task queue untuk membagi beban
